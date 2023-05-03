@@ -1,6 +1,5 @@
-#proxy.xxxEnvLevelxxx.lrs.the-infra.com
 AWSTemplateFormatVersion: 2010-09-09
-Description:  Spirit Route53 Stack
+Description:  Data Pipeline Route53 Stack
 #
 Parameters:
   EnvName:
@@ -16,7 +15,7 @@ Parameters:
 
 Resources:
   #
-  LRSApigIdDNS:
+  DPApigIdDNS:
     Type: 'AWS::Route53::RecordSet'
     Properties:
       Comment: !Sub 'Data Pipeline API: ${EnvName}'

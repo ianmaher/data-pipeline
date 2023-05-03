@@ -7,7 +7,7 @@ Create an API Key for client calling the endpoint
 
 
 ```
-aws apigateway create-api-key --region eu-west-1 --name 'Manual-Datapipeline-dev' --description 'Client API key for dev' --enabled
+aws apigateway create-api-key --region eu-west-2 --name 'Manual-data-pipeline-dev' --description 'Client API key for dev' --enabled
 ```
 ```
 {
@@ -28,7 +28,7 @@ aws s3 mb s3://codepipeline-eu-west-2-60717085471 --profile spirit-software
 aws s3 mb s3://spirit-data-pipeline --profile spirit-software
 
 
-
+aws s3 mb s3://spirit-data-pipeline-dev-eu-west-2 --profile spirit-software
 aws s3 mb s3://codepipeline-artifactstore-dp-dev-eu-west-2 --profile spirit-software
 ```
 
