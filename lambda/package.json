@@ -1,5 +1,5 @@
 {
-  "name": "Data Pipeline",
+  "name": "data-pipeline",
   "version": "1.0.0",
   "description": "Lambda Services for Data Pipeline",
   "scripts": {

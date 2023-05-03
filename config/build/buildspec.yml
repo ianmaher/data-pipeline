@@ -1,9 +1,8 @@
 version: 0.2
 env:
-  parameter-store:
-    NodeCurr: "/${EnvName}/parms/NodeCurr"
   variables:
     Region: "eu-west-2"
+    NodeCurr: "nodejs14.x"
 
 phases:
   install:
@@ -30,9 +29,9 @@ phases:
       - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/subnets.yml
       - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/subnets.yml
 
-      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/lrs-proxy.yml
-      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/lrs-proxy.yml
-      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/lrs-proxy.yml
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/data-pipeline.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/data-pipeline.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/data-pipeline.yml
 
       - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/apigateway.yml
       - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/apigateway.yml
@@ -57,7 +56,7 @@ phases:
       - aws s3 cp cf-templates/vpc.yml                                                  s3://${SourceBucket}-${Region}
       - aws s3 cp cf-templates/subnets.yml                                              s3://${SourceBucket}-${Region}
       - aws s3 cp cf-templates/apigateway.yml                                           s3://${SourceBucket}-${Region}
-      - aws s3 cp cf-templates/lrs-proxy.yml                                            s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/data-pipeline.yml                                        s3://${SourceBucket}-${Region}
       - aws s3 cp cf-templates/swagger.yml                                              s3://${SourceBucket}-${Region}
       - aws s3 cp cf-templates/route53.yml                                              s3://${SourceBucket}-${Region}
 
