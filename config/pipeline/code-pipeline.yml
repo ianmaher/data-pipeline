@@ -19,8 +19,8 @@ Parameters:
     Description: The branch of the repo to continuously deploy.
     Default: develop
     # dev     develop
-    # test    pipeline/edutest
-    # prod    pipeline/eduprod
+    # test    pipeline/test
+    # prod    pipeline/prod
   PipelineName:
     Description: A name for pipeline
     Type: String
@@ -53,7 +53,7 @@ Parameters:
   SSMParamInputsFileName:
     Description: A input for file name for clloudformaiton inputs
     Type: String
-    Default: ssm-params-ev.json
+    Default: ssm-params-dev.json
     # dev     ssm-params-dev.json
     # test    ssm-params-test.json
     # prod    ssm-params-prod.json

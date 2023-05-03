@@ -19,7 +19,7 @@ Resources:
   LRSApigIdDNS:
     Type: 'AWS::Route53::RecordSet'
     Properties:
-      Comment: !Sub 'Data Pipeline API: edu/${EnvName}'
+      Comment: !Sub 'Data Pipeline API: ${EnvName}'
       HostedZoneName: !Sub '${HostedZone}.'
       Name: !Sub '${HostedZone}'
       Type: A
