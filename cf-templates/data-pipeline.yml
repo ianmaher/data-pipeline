@@ -34,7 +34,7 @@ Parameters:
     Default: 1200
 
 Resources:
-  DPProxyDLQ:
+  DataPipelineDLQ:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Join
@@ -48,7 +48,7 @@ Resources:
       ContentBasedDeduplication: true
       FifoQueue: true
 
-  LRSProxySqs:
+  DataPipelineSqs:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Join
@@ -64,7 +64,7 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn:
           Fn::GetAtt:
-            - 'DataiPelineDLQ'
+            - 'DataPipelineDLQ'
             - 'Arn'
         maxReceiveCount: !Ref DPMaxReceiveCount
       DelaySeconds: 0
@@ -99,7 +99,7 @@ Resources:
                   - 'sqs:SendMessage'
                   - 'sqs:GetQueueAttributes'
                 Resource:
-                  - !GetAtt DPSqs.Arn
+                  - !GetAtt DataPipelineSqs.Arn
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
@@ -138,9 +138,9 @@ Resources:
     Properties:
       BatchSize: 1
       Enabled: true
-      EventSourceArn: !GetAtt DPSqs.Arn
+      EventSourceArn: !GetAtt DataPipelineSqs.Arn
       FunctionName: !GetAtt DPFunction.Arn
 Outputs:
-  DPSqsArn:
+  DataPipelineSqsArn:
     Description: 'URL of newly created SQS Queuefor Data Pipeline'
-    Value: !GetAtt DPSqs.Arn
+    Value: !GetAtt DataPipelineSqs.Arn
