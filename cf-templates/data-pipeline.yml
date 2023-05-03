@@ -3,14 +3,14 @@ Description: 'AWS CloudFormation template to config all resources required for t
 Parameters:
   EnvName:
     Type: String
-    Default: 'spiritdev'
+    Default: 'dev'
   DPMaxReceiveCount:
     Type: String
     Default: '3'
   SourceBucket:
     Description: SourceBucket where Lambdas are stored
     Type: String
-    Default:  spirit-data-pipeline
+    Default:  spirit-data-pipeline-dev
   SourceBucketKey:
     Description: SourceBucket object where Lambdas are stored
     Type: String
