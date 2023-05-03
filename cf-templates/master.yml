@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Spirit Resources Stack
+Parameters:
+  SourceBucket:
+    Description: Location of cloudformation templates
+    Type: String
+    Default: xxxSourceBucketxxx
+  CIDRBase:
+    Description: 'CIDR block'
+    Type: String
+  CidrBlockLambdaPrivateA:
+    Description: LambdaPrivate A
+    Type: String
+  CidrBlockLambdaPrivateB:
+    Description: LambdaPrivate B
+    Type: String
+  CidrBlockLambdaPrivateC:
+    Description: LambdaPrivate C
+    Type: String
+  CidrBlockLambdaPublicA:
+    Description: Lambda Public A
+    Type: String
+  CidrBlockLambdaPublicB:
+    Description: Lambda Public B
+    Type: String
+  CidrBlockLambdaPublicC:
+    Description: Lambda Public C
+    Type: String
+  EnvName:
+    Type: String
+    Default: 'xxxEnvNamexxx'
+  HostedZone:
+    Type: String
+    Description: Hosted Zone for the API Gateway in front of the SQS
+  CertificateArn:
+    Type: String
+    Description: Certificate for Custom domain
+
+Resources:
+  # VPC
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub 'https://s3.amazonaws.com/${SourceBucket}-${AWS::Region}/vpc.yml'
+      TimeoutInMinutes: 45
+      Parameters:
+        EnvName: !Ref EnvName
+        CIDRBase: !Ref CIDRBase
+  # Subnets
+  SubnetStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub 'https://s3.amazonaws.com/${SourceBucket}-${AWS::Region}/subnets.yml'
+      TimeoutInMinutes: 45
+      Parameters:
+        VPC: !GetAtt
+          - VPCStack
+          - Outputs.VPC
+        EnvName: !Ref EnvName
+        CidrBlockLambdaPrivateA: !Ref CidrBlockLambdaPrivateA
+        CidrBlockLambdaPrivateB: !Ref CidrBlockLambdaPrivateB
+        CidrBlockLambdaPrivateC: !Ref CidrBlockLambdaPrivateC
+        CidrBlockLambdaPublicA: !Ref CidrBlockLambdaPublicA
+        CidrBlockLambdaPublicB: !Ref CidrBlockLambdaPublicB
+        CidrBlockLambdaPublicC: !Ref CidrBlockLambdaPublicC
+        PrivateRouteTableAZ1: !GetAtt
+          - VPCStack
+          - Outputs.PrivateRouteTableAZ1
+        PrivateRouteTableAZ2: !GetAtt
+          - VPCStack
+          - Outputs.PrivateRouteTableAZ2
+        PrivateRouteTableAZ3: !GetAtt
+          - VPCStack
+          - Outputs.PrivateRouteTableAZ3
+        PrivateNetworkAcl: !GetAtt
+          - VPCStack
+          - Outputs.PrivateNetworkAcl
+        PublicRouteTableAZ1: !GetAtt
+          - VPCStack
+          - Outputs.PublicRouteTableAZ1
+        PublicRouteTableAZ2: !GetAtt
+          - VPCStack
+          - Outputs.PublicRouteTableAZ2
+        PublicRouteTableAZ3: !GetAtt
+          - VPCStack
+          - Outputs.PublicRouteTableAZ3
+        PublicNetworkAcl: !GetAtt
+          - VPCStack
+          - Outputs.PublicNetworkAcl
+  # Proxy Stack
+  ProxyStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub 'https://s3.amazonaws.com/${SourceBucket}-${AWS::Region}/data-pipeline.yml'
+      TimeoutInMinutes: 45
+      Parameters:
+        EnvName: !Ref EnvName
+        PrivateSubnetA: !GetAtt
+          - SubnetStack
+          - Outputs.PrivateSubnetA
+        PrivateSubnetB: !GetAtt
+          - SubnetStack
+          - Outputs.PrivateSubnetB
+
+        LambdaDefaultSG: !GetAtt
+          - SubnetStack
+          - Outputs.LambdaDefaultSG
+  # API Gateway
+  ApiGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub 'https://s3.amazonaws.com/${SourceBucket}-${AWS::Region}/apigateway.yml'
+      TimeoutInMinutes: 45
+      Parameters:
+        EnvName: !Ref EnvName
+        HostedZone: !Ref HostedZone
+        SourceBucket: !Ref SourceBucket
+        CertificateArn: !Ref CertificateArn
+  # Route 53
+  Route53Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        !Sub 'https://s3.amazonaws.com/${SourceBucket}-${AWS::Region}/route53.yml'
+      TimeoutInMinutes: 45
+      Parameters:
+        EnvName: !Ref EnvName
+        HostedZone: !Ref HostedZone
+        RegionalDomainName: !GetAtt
+          - ApiGatewayStack
+          - Outputs.RegionalDomainName
+        RegionalHostedZoneId: !GetAtt
+          - ApiGatewayStack
+          - Outputs.RegionalHostedZoneId

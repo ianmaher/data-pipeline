@@ -1,0 +1,15 @@
+{
+  "id": "/dp-body-schema",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Request body schema for data pipeline",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "message": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "message"
+  ]
+}

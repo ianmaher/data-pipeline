@@ -1,0 +1,115 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Data Pipeline API's"
+schemes:
+  - "https"
+paths:
+   /data-pipeline:
+    post:
+      tags:
+      - user
+      summary: data pipeline ingress
+      consumes:
+        - "application/json; charset=UTF-8"
+      produces:
+        - "application/json; charset=UTF-8"
+      parameters:
+        - name: messagegroupid
+          in: query
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/dp"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/dpresponse"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      # API key restriction
+      security:
+      - api_key: []
+      x-amazon-apigateway-integration:
+        credentials: "arn:aws:iam::xxxAccountNumberRefxxx:role/dev-data-pipeline-role-xxxEnvNamexxx"
+        uri: "arn:aws:apigateway:xxxRegionxxx:sqs:path/xxxAccountNumberRefxxx/DPQueue-xxxEnvNamexxx.fifo"
+        passthroughBehavior: "never"
+        httpMethod: "POST"
+        requestParameters:
+          integration.request.header.Content-Type: '''application/x-www-form-urlencoded'''
+        requestTemplates:
+          application/json: Action=SendMessage&MessageBody=$input.body&MessageGroupId=$input.params('messagegroupid')
+        type: "aws"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin : "'*'"
+    options:
+      tags:
+        - cors
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      consumes:
+        - "application/json; charset=UTF-8"
+      produces:
+        - "application/json; charset=UTF-8"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          "default":
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Access-Key-Id,X-Secret-Access-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods : "'POST, OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin : "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+      responses:
+        200:
+          #$ref: "#/definitions/CORSResponse"
+          description: Default response for CORS method
+          headers:
+            Access-Control-Allow-Headers:
+              type: "string"
+            Access-Control-Allow-Methods:
+              type: "string"
+            Access-Control-Allow-Origin:
+              type: "string"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "x-api-key"
+    in: "header"
+definitions:
+  Empty:
+    type: "object"
+    title: "Empty Schema"
+  dp:
+    type: "object"
+    properties:
+      verb:
+        type: "string"
+      actor:
+        type: "string"
+      object:
+        type: "string"
+  dpresponse:
+    type: "object"
+    properties:
+      id:
+        description: "Response Id"
+        type: "string"

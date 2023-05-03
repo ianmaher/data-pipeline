@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Data Pipeline CloudFront Stack
+Parameters:
+  CFSSLID:
+    Description: >-
+      IAMCertificateId used for custom SSL in cloudfront (Leave empty for
+      default SSL)
+    Type: String
+    Default: ''
+
+  EnvName:
+    Description: Current environment name
+    Type: String
+    Default: spiritdev
+
+  DPApigId:
+    Description: API Gateway for the LRS Proxy API
+    Type: String
+    Default: rtn6cb6nx0
+
+Conditions:
+  UseSSLID: !Not [ !Equals [ !Ref CFSSLID, '' ] ]
+
+Resources:
+  #
+  CFrontDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        HttpVersion: http2
+        Origins:
+          #
+          - DomainName:
+              !Sub '${DPApigId}.execute-api.${AWS::Region}.amazonaws.com'
+            OriginPath:
+              !Sub '/${EnvName}'
+            Id:
+              !Sub 'dp-apigtwy-${EnvName}'
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+          #
+        #
+        Enabled: true
+        DefaultRootObject: /
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /
+        PriceClass: PriceClass_All
+        ViewerCertificate: !If
+          - UseSSLID
+          - AcmCertificateArn: !Ref CFSSLID
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1
+          - CloudFrontDefaultCertificate: true
+        DefaultCacheBehavior:
+          TargetOriginId:
+            !Sub 'dp-apigtwy-${EnvName}'
+          AllowedMethods:
+            - POST
+            - PUT
+            - GET
+            - HEAD
+            - DELETE
+            - PATCH
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          MinTTL: 0
+          MaxTTL: 31536000
+          DefaultTTL: 31536000
+          SmoothStreaming: false
+          TrustedSigners: []
+          ViewerProtocolPolicy: redirect-to-https
+#
+Outputs:
+  CDNEndpoint:
+    Description: CDN endpoint
+    Value: !GetAtt
+      - CFrontDistribution
+      - DomainName
+  CDNid:
+    Description: CDN ID
+    Value: !Ref CFrontDistribution

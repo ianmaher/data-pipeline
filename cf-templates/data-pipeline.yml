@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation template to config all resources required for the Data pipeline'
+Parameters:
+  EnvName:
+    Type: String
+    Default: 'spiritdev'
+  DPMaxReceiveCount:
+    Type: String
+    Default: '3'
+  SourceBucket:
+    Description: SourceBucket where Lambdas are stored
+    Type: String
+    Default:  spirit-data-pipeline
+  SourceBucketKey:
+    Description: SourceBucket object where Lambdas are stored
+    Type: String
+    Default: 'lambda-source-xxxTimestampxxx.zip'
+  NodeCurr:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: '/xxxEnvNamexxx/parms/NodeCurr'
+  LambdaSmall:
+    Type: Number
+    MinValue: 128
+    MaxValue: 3008
+    Default: 2048
+  PrivateSubnetA:
+    Type: 'AWS::EC2::Subnet::Id'
+  PrivateSubnetB:
+    Type: 'AWS::EC2::Subnet::Id'
+  LambdaDefaultSG:
+    Type: 'AWS::EC2::SecurityGroup::Id'
+  VisibilityTimeoutParam:
+    Type: Number
+    Default: 1200
+
+Resources:
+  DPProxyDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Join
+        - ''
+        - - DataPipelineDLQ-
+          - !Ref EnvName
+          - '.fifo'
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 1209600
+      ReceiveMessageWaitTimeSeconds: 0
+      ContentBasedDeduplication: true
+      FifoQueue: true
+
+  LRSProxySqs:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Join
+        - ''
+        - - DataPipelineQueue-
+          - !Ref EnvName
+          - '.fifo'
+      FifoQueue: true
+      MaximumMessageSize: 262144
+      ReceiveMessageWaitTimeSeconds: 10
+      MessageRetentionPeriod: 1209600
+      ContentBasedDeduplication: true
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - 'DataiPelineDLQ'
+            - 'Arn'
+        maxReceiveCount: !Ref DPMaxReceiveCount
+      DelaySeconds: 0
+      VisibilityTimeout: !Ref VisibilityTimeoutParam
+
+  LambdaDPRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Join: [ '-', [ 'data-pipeline-role', !Ref EnvName ] ]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+                - 'apigateway.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName:
+            Fn::Join: [ '-', [ 'data-pipeline-policy', !Ref EnvName ] ]
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sqs:DeleteMessage'
+                  - 'sqs:ReceiveMessage'
+                  - 'sqs:SendMessage'
+                  - 'sqs:GetQueueAttributes'
+                Resource:
+                  - !GetAtt DPSqs.Arn
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
+        - 'arn:aws:iam::aws:policy/AWSXrayFullAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
+        - 'arn:aws:iam::aws:policy/AmazonEC2FullAccess'
+
+  DPFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: lambda/lambdaHandlers/datapipeline.handler
+      Runtime: !Ref NodeCurr
+      MemorySize: !Ref LambdaSmall
+      FunctionName: !Sub 'DataPipeline_${EnvName}'
+      Code:
+        S3Bucket: !Sub '${SourceBucket}-${AWS::Region}'
+        S3Key: !Sub '${SourceBucketKey}'
+      Role: !GetAtt LambdaDPRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          ENV_NAME: !Ref EnvName
+      #Layers:
+      #  - !Ref NodeModulesLayer
+      TracingConfig:
+        Mode: 'Active'
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaDefaultSG
+        SubnetIds:
+          - !Ref PrivateSubnetA
+          - !Ref PrivateSubnetB
+
+  DPEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt DPSqs.Arn
+      FunctionName: !GetAtt DPFunction.Arn
+Outputs:
+  DPSqsArn:
+    Description: 'URL of newly created SQS Queuefor Data Pipeline'
+    Value: !GetAtt DPSqs.Arn

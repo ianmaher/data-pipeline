@@ -1,0 +1,30 @@
+{
+  "name": "Data Pipeline",
+  "version": "1.0.0",
+  "description": "Lambda Services for Data Pipeline",
+  "scripts": {
+    "test": "jest",
+    "dev": "npm run preflightchecks & cross-env LOG_TRACE=true nodemon ./localServer/server.js",
+    "preflightchecks": "npm run custom-cli-tab & check-node-version --node 12 --npm \">=5\"",
+    "custom-cli-tab": "title \"Data Pipeline Lambda :7801\""
+  },
+  "author": "Spirit Software",
+  "license": "ISC",
+  "dependencies": {
+    "jsonschema": "^1.1.1",
+    "lodash.get": "^4.4.2",
+    "lodash.set": "^4.3.2",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.3",
+    "check-node-version": "^4.1.0",
+    "cross-env": "^5.1.3",
+    "jest": "^25.1.0",
+    "koa": "^2.3.0",
+    "koa-bodyparser": "^4.2.0",
+    "nodemon": "^1.11.0",
+    "terminal-title": "^1.0.1"
+  }
+}

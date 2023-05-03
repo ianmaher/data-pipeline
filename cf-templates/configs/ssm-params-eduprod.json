@@ -1,0 +1,19 @@
+{
+    "parameters": [
+      {
+        "name": "parms/NodeCurr",
+        "paramtype": "String",
+        "value": "nodejs14.x"
+      },
+      {
+        "name": "parms/ClientApiKeyId",
+        "paramtype": "String",
+        "value": "n/a"
+      },
+      {
+        "name": "parms/EnvPrefix",
+        "paramtype": "String",
+        "value": "prod"
+      }
+    ]
+  }

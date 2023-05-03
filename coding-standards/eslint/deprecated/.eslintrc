@@ -1,0 +1,10 @@
+{
+
+    "rules":{
+        // These rules make if statements less logical
+        "no-lonely-if": 0,
+        "no-else-return": 0,
+        "no-invalid-this": 0,
+        "consistent-return": 0        
+    }
+}

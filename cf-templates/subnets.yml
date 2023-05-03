@@ -1,0 +1,338 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Spirit Subnet template
+Parameters:
+  VPC:
+    Description: Name of an existing VPC
+    Type: 'AWS::EC2::VPC::Id'
+    ConstraintDescription: must be the name of an existing vpc
+  EnvName:
+    Description: EnvName - dev/test/prod etc
+    Type: String
+  CidrBlockLambdaPrivateA:
+    Description: LambdaPrivate A
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  CidrBlockLambdaPrivateB:
+    Description: LambdaPrivate B
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  CidrBlockLambdaPrivateC:
+    Description: LambdaPrivate C
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  CidrBlockLambdaPublicA:
+    Description: Lambda Public A
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  CidrBlockLambdaPublicB:
+    Description: Lambda Public B
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  CidrBlockLambdaPublicC:
+    Description: LambdaPublic C
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  PrivateRouteTableAZ1:
+    Description: Name of an existing Private Route Table AZ1
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PrivateRouteTableAZ2:
+    Description: Name of an existing Private Route Table AZ2
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PrivateRouteTableAZ3:
+    Description: Name of an existing Private Route Table AZ3
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PublicRouteTableAZ1:
+    Description: Name of an existing Public Route Table AZ1
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PublicRouteTableAZ2:
+    Description: Name of an existing Public Route Table AZ2
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PublicRouteTableAZ3:
+    Description: Name of an existing Public Route Table AZ3
+    Type: String
+    ConstraintDescription: must be the name of an existing route table
+  PrivateNetworkAcl:
+    Description: Name of an existing Private Access Control table
+    Type: String
+  PublicNetworkAcl:
+    Description: Name of an existing Private Access Control table
+    Type: String
+Resources:
+  PublicSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPublicA
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'Public-DP-Subnet-A-${EnvName}'
+  
+  PublicSubnetARouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTableAZ1
+  
+  PublicSubnetANetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      NetworkAclId: !Ref PublicNetworkAcl
+  
+  PublicSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPublicB
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'Public-DP-Subnet-B-${EnvName}'
+  
+  LambdaSubnetPublicBRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTableAZ2
+  
+  LambdaSubnetPublicBNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      NetworkAclId: !Ref PublicNetworkAcl
+  
+  PublicSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPublicC
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'Public-DP-Subnet-C-${EnvName}'
+  
+  LambdaSubnetCRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref PublicRouteTableAZ3
+  
+  LambdaSubnetPublicCNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      NetworkAclId: !Ref PublicNetworkAcl
+  
+
+  PrivateSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPrivateA
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub 'Pri-DP-Subnet-A-${EnvName}'
+  
+  LambdaSubnetARouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTableAZ1
+  
+  LambdaSubnetANetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      NetworkAclId: !Ref PrivateNetworkAcl
+  
+  PrivateSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPrivateB
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub 'Pri-DP-Subnet-B-${EnvName}'
+  
+  LambdaSubnetBRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTableAZ2
+  
+  LambdaSubnetBNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      NetworkAclId: !Ref PrivateNetworkAcl
+  
+  PrivateSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Ref CidrBlockLambdaPrivateC
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub 'Pri-DP-Subnet-C-${EnvName}'
+  
+  LambdaSubnetCRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTableAZ3
+  
+  LambdaSubnetCNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      NetworkAclId: !Ref PrivateNetworkAcl
+  
+
+  LambdaDefaultSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub 'Lambda-DPSG-${EnvName}'
+      GroupDescription: !Sub 'Lambda-DPSG-${EnvName}'
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub 'Lambda-DPSG-${EnvName}'
+      VpcId: !Ref VPC
+  
+  
+  EIPA:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+  NATGatewayA:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt
+        - EIPA
+        - AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - Key: Name
+          Value: !Sub 'NatGateway-A-${EnvName}'
+  EIPB:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+  NATGatewayB:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt
+        - EIPB
+        - AllocationId
+      SubnetId: !Ref PublicSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub 'NatGateway-B-${EnvName}'
+  EIPC:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+  NATGatewayC:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt
+        - EIPC
+        - AllocationId
+      SubnetId: !Ref PublicSubnetC
+      Tags:
+        - Key: Name
+          Value: !Sub 'NatGateway-C-${EnvName}'
+
+
+  RouteA:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAZ1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayA
+  RouteB:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAZ2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayB
+  RouteC:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAZ3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayC      
+Outputs:
+  PrivateSubnetA:
+    Description: Lambda Subnet ID
+    Value: !Ref PrivateSubnetA
+  PrivateSubnetB:
+    Description: Lambda Subnet ID
+    Value: !Ref PrivateSubnetB
+  PrivateSubnetC:
+    Description: Lambda Subnet ID
+    Value: !Ref PrivateSubnetC
+  PublicSubnetA:
+    Description: Lambda Subnet ID
+    Value: !Ref PublicSubnetA
+  PublicSubnetB:
+    Description: Lambda Subnet ID
+    Value: !Ref PublicSubnetB
+  PublicSubnetC:
+    Description: Lambda Subnet ID
+    Value: !Ref PublicSubnetC
+  LambdaDefaultSG:
+    Description: Lambda Default SG
+    Value: !Ref LambdaDefaultSG

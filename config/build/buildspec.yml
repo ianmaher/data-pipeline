@@ -1,0 +1,78 @@
+version: 0.2
+env:
+  parameter-store:
+    NodeCurr: "/${EnvName}/parms/NodeCurr"
+  variables:
+    Region: "eu-west-2"
+
+phases:
+  install:
+    commands:
+      # Echo build node version information on build log
+      - echo "NodeCurr SSM parm is       - ${NodeCurr}"
+      - NodeVer=${NodeCurr:6:2}
+      - echo "Node install version value - ${NodeVer}"
+      - n $NodeVer
+      - node -v
+      - npm -v
+      - cd lambda
+      - NODE_ENV=production npm install
+      - cd ..
+  pre_build:
+    commands:
+      - Timestamp="`date +%y-%m-%d-%H-%M`"
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/master.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/master.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/master.yml
+      - sed -ie "s@xxxSourceBucketxxx@${SourceBucket}@g"                                cf-templates/master.yml
+
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/subnets.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/subnets.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/subnets.yml
+
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/lrs-proxy.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/lrs-proxy.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/lrs-proxy.yml
+
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/apigateway.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/apigateway.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/apigateway.yml
+
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/swagger.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/swagger.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/swagger.yml
+      - sed -ie "s@xxxAccountNumberRefxxx@${AccountNumberRef}@g"                        cf-templates/swagger.yml
+
+      - sed -ie "s@xxxRegionxxx@${Region}@g"                                            cf-templates/route53.yml
+      - sed -ie "s@xxxTimestampxxx@${Timestamp}@g"                                      cf-templates/route53.yml
+      - sed -ie "s@xxxEnvNamexxx@${EnvName}@g"                                          cf-templates/route53.yml
+
+  build:
+    commands:
+      # Lambda
+      - zip -q -r lambda-source-${Timestamp} lambda/*
+      - aws s3 cp lambda-source-${Timestamp}.zip                                        s3://${SourceBucket}-${Region}
+      # Copy cloud formation scripts
+      - aws s3 cp cf-templates/master.yml                                               s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/vpc.yml                                                  s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/subnets.yml                                              s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/apigateway.yml                                           s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/lrs-proxy.yml                                            s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/swagger.yml                                              s3://${SourceBucket}-${Region}
+      - aws s3 cp cf-templates/route53.yml                                              s3://${SourceBucket}-${Region}
+
+      # Copy configs
+      - aws s3 cp cf-templates/configs/                                                 s3://${SourceBucket}-${Region}/configs/ --recursive
+      - aws s3 cp cf-templates/scripts/                                                 s3://${SourceBucket}-${Region}/scripts/ --recursive
+
+artifacts:
+  files:
+    - pipeline-params/**/*
+    - cf-templates/master.yml
+    - cf-templates/apigateway.yml
+    - cf-templates/vpc.yml
+    - cf-templates/subnets.yml
+    - cf-templates/data-pipeline.yml
+    - cf-templates/configs/ssm-params-${EnvName}.json
+    - cf-templates/swagger.yml
+    - cf-templates/route53.yml

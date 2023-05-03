@@ -1,0 +1,29 @@
+#proxy.xxxEnvLevelxxx.lrs.the-infra.com
+AWSTemplateFormatVersion: 2010-09-09
+Description:  Spirit Route53 Stack
+#
+Parameters:
+  EnvName:
+    Type: String
+  HostedZone:
+    Description: name of the Hosted Zone for spiritsoftware.net
+    Type: String
+    ConstraintDescription: must be the name of an existing hosted zone in the same account
+  RegionalDomainName:
+    Type: String
+  RegionalHostedZoneId:
+    Type: String
+
+Resources:
+  #
+  LRSApigIdDNS:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      Comment: !Sub 'Data Pipeline API: edu/${EnvName}'
+      HostedZoneName: !Sub '${HostedZone}.'
+      Name: !Sub '${HostedZone}'
+      Type: A
+      AliasTarget:
+        HostedZoneId: !Ref RegionalHostedZoneId
+        DNSName: !Ref RegionalDomainName
+  #

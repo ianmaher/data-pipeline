@@ -1,0 +1,18 @@
+{
+    "Parameters": {
+        "EnvName":"dev",
+        "CIDRBase": "10.159.193.0/24",
+        "CidrBlockLambdaPrivateA": "10.159.193.96/27",
+        "CidrBlockLambdaPrivateB": "10.159.193.128/27",
+        "CidrBlockLambdaPrivateC": "10.159.193.160/27",
+        "CidrBlockLambdaPublicA": "10.159.193.0/27",
+        "CidrBlockLambdaPublicB": "10.159.193.32/27",
+        "CidrBlockLambdaPublicC": "10.159.193.64/27",
+        "HostedZone":"dev.dp.spiritsoftware.net",
+        "CertificateArn":"arn:aws:acm:eu-west-2:222910337455:certificate/f45d0442-b35b-472f-88f5-0d93852a0a1a"
+    },
+    "Tags" : {
+      "Environment": "dev",
+      "RegionName": "eu-west-2"
+    }
+  }

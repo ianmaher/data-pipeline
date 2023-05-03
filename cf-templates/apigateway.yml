@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Data Pipeline API Gateway definitions
+#
+Parameters:
+  EnvName:
+    Type: String
+  HostedZone:
+    Description: name of an existing Hosted Zone
+    Type: String
+    ConstraintDescription: must be the name of an existing hosted zone in the same account
+  SourceBucket:
+    Type: String
+  Label:
+      Type: String
+      Default: Client
+  CertificateArn:
+    Type: String
+    Description: Certificate for Custom domain
+  #
+  # Parms set by SSM
+  ##
+  DPApiKeyId:
+    Description: Env Prefix
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: '/xxxEnvNamexxx/parms/ClientApiKeyId'
+  ##
+  PipeCreateDomain:
+    Description: Control if the domain should be created. Added and set manually before execution
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: '/xxxEnvNamexxx/parms/pipe/CreateDomain'
+#
+Conditions:
+  RequiresDomain: !Equals [ !Ref PipeCreateDomain, 'Y' ]
+#
+Resources:
+  # Open API Gateway Definition
+  DPApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name:
+        !Sub 'Data Pipeline API: ${EnvName}'
+      Description: !Sub 'Data Pipeline API gateway, environment ${EnvName}'
+      BodyS3Location:
+        Bucket: !Sub '${SourceBucket}-${AWS::Region}'
+        Key: 'swagger.yml'
+  #
+  DPApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref DPApi
+  #
+  DPApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref DPApiDeployment
+      RestApiId: !Ref DPApi
+      StageName: !Ref EnvName
+  #
+  DomainName:
+    Type: AWS::ApiGateway::DomainName
+    Condition: RequiresDomain
+    Properties:
+      DomainName:
+        !Sub '${HostedZone}'
+      RegionalCertificateArn:
+        !Ref CertificateArn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  DomainNameMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: RequiresDomain
+    Properties:
+      DomainName: !Ref DomainName
+      RestApiId: !Ref DPApi
+      Stage: !Ref DPApiStage
+  #
+  # APIG Usage plan
+  UsagePlan:
+    DependsOn:
+      - DPApiStage
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+      - ApiId: !Ref DPApi
+        Stage: !Ref EnvName
+      UsagePlanName: !Sub 'DP-UsagePlan-${Label}-${EnvName}'
+      Description: !Sub 'DP API usage plan for ${Label}, environment ${EnvName}'
+  #
+  # APIG Usage plan and key association using parms
+  UsagePlanKeyParm:
+    # Condition: UseAPIKeys
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref DPApiKeyId
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+#
+Outputs:
+  DPApigId:
+    Value: !Ref DPApi
+  DPApiKey:
+    Value: !Ref DPApiKeyId
+  RegionalDomainName:
+    Value: !If
+      - RequiresDomain
+      - !GetAtt DomainName.RegionalDomainName
+      - 'n/a'
+  RegionalHostedZoneId:
+    Value: !If
+      - RequiresDomain
+      - !GetAtt DomainName.RegionalHostedZoneId
+      - 'n/a'
