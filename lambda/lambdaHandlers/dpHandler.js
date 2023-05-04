@@ -7,7 +7,7 @@ exports.handler = async event => {
     LOG.trace(`Request Event :: ${JSON.stringify(event)}`);
     const { Records: [record] = [] } = event;
 
-    const statement = (record && record.body) || event.body || event;
+    const statement = (record && JSON.parse(record.body)) || event.body || event;
 
     LOG.trace(`verb :: ${statement.verb}`);
     LOG.trace(`actor :: ${statement.actor}`);
