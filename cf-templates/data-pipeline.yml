@@ -10,7 +10,7 @@ Parameters:
   SourceBucket:
     Description: SourceBucket where Lambdas are stored
     Type: String
-    Default:  spirit-data-pipeline-dev
+    Default:  spirit-data-pipeline-xxxEnvNamexxx
   SourceBucketKey:
     Description: SourceBucket object where Lambdas are stored
     Type: String
@@ -110,7 +110,7 @@ Resources:
   DPFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Handler: lambda/lambdaHandlers/datapipeline.handler
+      Handler: lambda/lambdaHandlers/dpHandler.handler
       Runtime: !Ref NodeCurr
       MemorySize: !Ref LambdaSmall
       FunctionName: !Sub 'DataPipeline_${EnvName}'
