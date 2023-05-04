@@ -9,7 +9,10 @@ exports.handler = async event => {
 
     const statement = (record && record.body) || event.body || event;
 
-    LOG.trace(`statement :: ${JSON.stringify(statement)}`);
+    LOG.trace(`verb :: ${statement.verb}`);
+    LOG.trace(`actor :: ${statement.actor}`);
+    LOG.trace(`object :: ${statement.object}`);
+    
     // the end
   } catch (error) {
     LOG.error('Handler Error :: ', error);
