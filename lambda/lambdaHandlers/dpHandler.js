@@ -7,10 +7,9 @@ exports.handler = async event => {
     LOG.trace(`Request Event :: ${JSON.stringify(event)}`);
     const { Records: [record] = [] } = event;
 
-    const statement = (record && JSON.parse(record.body)) || event.body || event;
-    LOG.trace(`statement :: ${JSON.stringify(statement)}`);
+    const statement = (record && record.body) || event.body || event;
 
-   
+    LOG.trace(`statement :: ${JSON.stringify(statement)}`);
     // the end
   } catch (error) {
     LOG.error('Handler Error :: ', error);
