@@ -37,7 +37,7 @@ paths:
       security:
       - api_key: []
       x-amazon-apigateway-integration:
-        credentials: "arn:aws:iam::xxxAccountNumberRefxxx:role/dev-data-pipeline-role-xxxEnvNamexxx"
+        credentials: "arn:aws:iam::xxxAccountNumberRefxxx:role/data-pipeline-role-xxxEnvNamexxx"
         uri: "arn:aws:apigateway:xxxRegionxxx:sqs:path/xxxAccountNumberRefxxx/DPQueue-xxxEnvNamexxx.fifo"
         passthroughBehavior: "never"
         httpMethod: "POST"
